@@ -80,6 +80,74 @@ def preprocess(filename, vsize = -1):
         dataset[side] = pad_sequences(dataset[side], maxlen = maxlen)
     return X_train, X_val, Y_train.values, Y_val.values, embedding, maxlen
 
+def tsv_preprocess(domain):
+    I2Q, df, f, pos = dict(), pd.read_csv('data/' + domain + '/corpus.tsv', sep = '\t'), open(domain + '/full.pos.txt'), []
+    ID, Q, PQ, ids = df.id.tolist(), df.Q.tolist(), [], []
+    for (i, q) in zip(ID, Q):
+        I2Q[i] = q
+        ids.append(i)
+    for line in f:
+        t = line.split()
+        id1, id2 = int(t[0]), int(t[1])
+        PQ.append((I2Q[id1], I2Q[id2]))
+        pos.append((id1, id2))
+    f.close()
+    NQ, negative, positive, npos = [], set(), set(pos), len(pos)
+    for _ in pos:
+        p = True
+        while p:
+            random_pair = sample(ids, 2)
+            l, r = random_pair[0], random_pair[1]
+            if (l, r) not in positive and (r, l) not in positive:
+                if (l, r) not in negative and (r, l) not in negative:
+                    negative.add((l, r))
+                    NQ.append((I2Q[l], I2Q[r]))
+                    p = False
+    val, train_q1, train_q2, train_dupl, val_q1, val_q2, val_dupl = set(sample(range(npos), int(0.13*npos))), [], [], [], [], [], []
+    for i in range(npos):
+        if i in val:
+            val_q1.append(PQ[i][0])
+            val_q2.append(PQ[i][1])
+            val_dupl.append(1)
+            val_q1.append(NQ[i][0])
+            val_q2.append(NQ[i][1])
+            val_dupl.append(0)
+        else:
+            train_q1.append(PQ[i][0])
+            train_q2.append(PQ[i][1])
+            train_dupl.append(1)
+            train_q1.append(NQ[i][0])
+            train_q2.append(NQ[i][1])
+            train_dupl.append(0)
+    maxlen, w2id, nw =  0, dict(), 1
+    w2v = KeyedVectors.load_word2vec_format('GoogleWord2Vec.bin', binary=True)
+    vocab, stops = w2v.vocab, set(stopwords.words('english'))
+    for ql in [train_q1, train_q2, val_q1, val_q2]:
+        for i in range(len(ql)):
+            wl, q2id = q2wl(ql[i]), []
+            for w in wl:
+                if w in stops and w not in vocab:
+                    continue
+                if w in w2id:
+                    q2id.append(w2id[w])
+                else:
+                    q2id.append(nw)
+                    w2id[w] = nw
+                    nw += 1
+            ql[i], length = q2id, len(q2id)
+            if length > maxlen:
+                maxlen = length
+    embedding = 1 * np.random.randn(nw, 300)
+    for w in w2id:
+        if w in vocab:
+            embedding[w2id[w]] = w2v.word_vec(w)
+    del w2id, w2v, vocab
+    X_train, X_val = {'L': pd.Series(train_q1), 'R': pd.Series(train_q2)}, {'L': pd.Series(val_q1), 'R': pd.Series(val_q2)}
+    Y_train, Y_val = pd.DataFrame({'is_dupl': train_dupl}), pd.DataFrame({'is_dupl': val_dupl})
+    for dataset, side in itertools.product([X_train, X_val], ['L', 'R']):
+        dataset[side] = pad_sequences(dataset[side], maxlen = maxlen)
+    return X_train, X_val, Y_train.values, Y_val.values, embedding, maxlen
+
 def TPR(true, pred):
     TP = K.sum(K.round(K.clip(true * pred, 0, 1)))
     P = K.sum(K.round(K.clip(true, 0, 1)))
@@ -109,8 +177,16 @@ def q2wl(q):
     return q.split()
 
 if __name__ == '__main__':
-    print('Preprocessing...')
-    X_train, X_val, Y_train, Y_val, embedding, l = preprocess('quora.csv')
-    print('Compeleted! Type "test()" to test!')
-    def test(): return train(X_train, X_val, Y_train, Y_val, embedding, l)
+    print('Quora: Preprocessing...')
+    X_train, X_val, Y_train, Y_val, embedding, l = preprocess('data/quora.csv')
+    print('Quora: Training...')
+    result = [None] * 5
+    result[0], i = train(X_train, X_val, Y_train, Y_val, embedding, l), 1
+    i = 1
+    for domain in ['apple', 'android', 'ubuntu', 'superuser']:
+        print(domain + ': Preprocessing...')
+        X_train, X_val, Y_train, Y_val, embedding, l = tsv_preprocess(domain)
+        print(domain + ': Training...')
+        result[i] = train(X_train, X_val, Y_train, Y_val, embedding, l)
+        i += 1
     
