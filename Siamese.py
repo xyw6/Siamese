@@ -81,7 +81,7 @@ def preprocess(filename, vsize = -1):
     return X_train, X_val, Y_train.values, Y_val.values, embedding, maxlen
 
 def tsv_preprocess(domain):
-    I2Q, df, f, pos = dict(), pd.read_csv('data/' + domain + '/corpus.tsv', sep = '\t'), open(domain + '/full.pos.txt'), []
+    I2Q, df, f, pos = dict(), pd.read_csv('data/' + domain + '/corpus.tsv', sep = '\t'), open('data/' + domain + '/full.pos.txt'), []
     ID, Q, PQ, ids = df.id.tolist(), df.Q.tolist(), [], []
     for (i, q) in zip(ID, Q):
         I2Q[i] = q
