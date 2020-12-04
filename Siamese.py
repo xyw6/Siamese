@@ -112,5 +112,5 @@ if __name__ == '__main__':
     print('Preprocessing...')
     X_train, X_val, Y_train, Y_val, embedding, l = preprocess('quora.csv')
     print('Compeleted! Type "test()" to test!')
-    def test(): return train(X_train, X_val, Y_train, Y_val, embedding, l)
+    result = train(X_train, X_val, Y_train, Y_val, embedding, l)
     
