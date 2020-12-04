@@ -1,0 +1,5 @@
+pandas
+gensim
+nltk
+keras
+itertools
