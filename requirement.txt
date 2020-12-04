@@ -1,0 +1,6 @@
+tensorflow
+pandas
+gensim
+nltk
+keras
+itertools
