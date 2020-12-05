@@ -4,4 +4,4 @@ Step2: [Get Cleaned Data](https://1drv.ms/u/s!Aq8XcGokRpklgYBTtuad5joEc1ziLA?e=8
 Step3: [Get Google Word2Vec](https://1drv.ms/u/s!Aq8XcGokRpklgYBc6Llof2bTL5iKhw?e=YGPofe)  
 Step4: unzip the data and Google W2V to the root directory.  
 Step5: Run Siamese.py  
-The result of the experiments can be found in folder 'result'.
+The result of the experiments can be found in result.csv

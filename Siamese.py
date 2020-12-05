@@ -19,7 +19,7 @@ def train(X_train, X_val, Y_train, Y_val, embedding, l, n_hidden = 50, batch = 6
     outputL, outputR = lstm(encodedL), lstm(encodedR)
     similarity = Lambda(function = lambda x: K.exp(-K.sum(K.abs(x[0]-x[1]), axis=1, keepdims = True)), output_shape = lambda x: (x[0][0], 1))([outputL, outputR])
     model = Model([inputL, inputR], [similarity])
-    model.compile(loss = 'binary_crossentropy', optimizer = Adadelta(clipnorm = g), metrics = ['acc', TPR, PPV])
+    model.compile(loss = 'mse', optimizer = Adadelta(clipnorm = g), metrics = ['acc', TPR, PPV])
     return model.fit([X_train['L'], X_train['R']], Y_train, batch_size = batch, epochs = epoch, validation_data=([X_val['L'], X_val['R']], Y_val))
 
 def preprocess(filename, vsize = -1):
